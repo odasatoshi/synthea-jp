@@ -156,16 +156,25 @@ public final class LifecycleModule extends Module {
     String gender = (String) attributes.get(Person.GENDER);
     if (attributes.get(Person.ENTITY) == null) {
       attributes.put(Person.BIRTHDATE, time);
-      String firstName = Names.fakeFirstName(gender, language, person);
-      String lastName = Names.fakeLastName(language, person);
+      String[] first = Names.firstNameWithKana(gender, language, person);
+      String[] last = Names.lastNameWithKana(language, person);
+      String firstName = first[0];
+      String lastName = last[0];
       attributes.put(Person.FIRST_NAME, firstName);
       String middleName = null;
       if (person.rand() <= MIDDLE_NAME_PROBABILITY) {
-        middleName = Names.fakeFirstName(gender, language, person);
+        String[] middle = Names.firstNameWithKana(gender, language, person);
+        middleName = middle[0];
         attributes.put(Person.MIDDLE_NAME, middleName);
+        attributes.put(Names.MIDDLE_NAME_KANA, middle[1]);
       }
       attributes.put(Person.LAST_NAME, lastName);
-      attributes.put(Person.NAME, firstName + " " + lastName);
+      attributes.put(Person.NAME, Names.fullName(firstName, lastName));
+      if (!first[1].isEmpty() || !last[1].isEmpty()) {
+        attributes.put(Names.FIRST_NAME_KANA, first[1]);
+        attributes.put(Names.LAST_NAME_KANA, last[1]);
+        attributes.put(Names.NAME_KANA, Names.fullName(first[1], last[1]));
+      }
 
       String phoneNumber = "555-" + ((person.randInt(999 - 100 + 1) + 100)) + "-"
           + ((person.randInt(9999 - 1000 + 1) + 1000));
@@ -177,11 +186,12 @@ public final class LifecycleModule extends Module {
 
     String motherFirstName = Names.fakeFirstName("F", language, person);
     String motherLastName = Names.fakeLastName(language, person);
-    attributes.put(Person.NAME_MOTHER, motherFirstName + " " + motherLastName);
+    attributes.put(Person.NAME_MOTHER, Names.fullName(motherFirstName, motherLastName));
 
     String fatherFirstName = Names.fakeFirstName("M", language, person);
     // this is anglocentric where the baby gets the father's last name
-    attributes.put(Person.NAME_FATHER, fatherFirstName + " " + attributes.get(Person.LAST_NAME));
+    attributes.put(Person.NAME_FATHER,
+        Names.fullName(fatherFirstName, (String) attributes.get(Person.LAST_NAME)));
 
     double prevalenceOfTwins =
         (double) BiometricsConfig.get("lifecycle.prevalence_of_twins", 0.02);
@@ -311,7 +321,8 @@ public final class LifecycleModule extends Module {
         break;
       case 18:
         // name prefix
-        if (person.attributes.get(Person.NAME_PREFIX) == null) {
+        if (person.attributes.get(Person.NAME_PREFIX) == null && !Names.familyNameFirst) {
+          // Japanese records carry no name prefix
           String namePrefix;
           if ("M".equals(person.attributes.get(Person.GENDER))) {
             namePrefix = "Mr.";
@@ -349,21 +360,27 @@ public final class LifecycleModule extends Module {
           if (getsMarried) {
             person.attributes.put(Person.MARITAL_STATUS, "M");
             if ("F".equals(person.attributes.get(Person.GENDER))) {
-              person.attributes.put(Person.NAME_PREFIX, "Mrs.");
+              if (!Names.familyNameFirst) {
+                person.attributes.put(Person.NAME_PREFIX, "Mrs.");
+              }
               person.attributes.put(Person.MAIDEN_NAME, person.attributes.get(Person.LAST_NAME));
+              person.attributes.put(Names.MAIDEN_NAME_KANA,
+                  person.attributes.get(Names.LAST_NAME_KANA));
               String firstName = ((String) person.attributes.get(Person.FIRST_NAME));
               String middleName = null;
               if (person.attributes.containsKey(Person.MIDDLE_NAME)) {
                 middleName = (String) person.attributes.get(Person.MIDDLE_NAME);
               }
               String language = (String) person.attributes.get(Person.FIRST_LANGUAGE);
-              String newLastName = Names.fakeLastName(language, person);
+              String[] newLast = Names.lastNameWithKana(language, person);
+              String newLastName = newLast[0];
               person.attributes.put(Person.LAST_NAME, newLastName);
-              if (middleName != null) {
-                person.attributes.put(Person.NAME,
-                    firstName + " " + middleName + " " + newLastName);
-              } else {
-                person.attributes.put(Person.NAME, firstName + " " + newLastName);
+              person.attributes.put(Person.NAME,
+                  Names.fullName(firstName, middleName, newLastName));
+              if (!newLast[1].isEmpty()) {
+                person.attributes.put(Names.LAST_NAME_KANA, newLast[1]);
+                person.attributes.put(Names.NAME_KANA, Names.fullName(
+                    (String) person.attributes.get(Names.FIRST_NAME_KANA), newLast[1]));
               }
             }
           } else {
@@ -373,7 +390,7 @@ public final class LifecycleModule extends Module {
         break;
       case 30:
         // "overeducated" -> suffix
-        if ((person.attributes.get(Person.NAME_SUFFIX) == null)
+        if ((person.attributes.get(Person.NAME_SUFFIX) == null) && !Names.familyNameFirst
             && ((double) person.attributes.get(Person.EDUCATION_LEVEL) >= 0.95)) {
           List<String> suffixList = Arrays.asList("PhD", "JD", "MD");
           person.attributes.put(Person.NAME_SUFFIX,
