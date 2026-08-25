@@ -16,6 +16,7 @@ import org.mitre.synthea.helpers.RandomCollection;
 import org.mitre.synthea.helpers.RandomNumberGenerator;
 import org.mitre.synthea.helpers.SimpleCSV;
 import org.mitre.synthea.helpers.Utilities;
+import org.mitre.synthea.world.concepts.Names;
 
 /**
  * Demographics class holds the information from the towns.json and associated county config files.
@@ -79,7 +80,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return the age in years
    */
-  public int pickAge(RandomNumberGenerator random) {
+  public synchronized int pickAge(RandomNumberGenerator random) {
     // lazy-load in case this randomcollection isn't necessary
     if (ageDistribution == null) {
       ageDistribution = buildRandomCollectionFromMap(ages);
@@ -107,7 +108,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return the gender
    */
-  public String pickGender(RandomNumberGenerator random) {
+  public synchronized String pickGender(RandomNumberGenerator random) {
 
     // lazy-load in case this randomcollection isn't necessary
     if (genderDistribution == null) {
@@ -128,7 +129,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return the race
    */
-  public String pickRace(RandomNumberGenerator random) {
+  public synchronized String pickRace(RandomNumberGenerator random) {
     // lazy-load in case this random collection isn't necessary
     if (raceDistribution == null) {
       raceDistribution = buildRandomCollectionFromMap(race);
@@ -150,7 +151,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return "hispanic" or "nonhispanic"
    */
-  public String pickEthnicity(RandomNumberGenerator random) {
+  public synchronized String pickEthnicity(RandomNumberGenerator random) {
     if (ethnicityDistribution == null) {
       ethnicityDistribution = new RandomCollection();
       ethnicityDistribution.add(ethnicity, "hispanic");
@@ -170,6 +171,11 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    */
   public String languageFromRaceAndEthnicity(String race, String ethnicity,
       RandomNumberGenerator random) {
+    if (Names.japaneseLocale) {
+      // The race/language distributions below are US census figures. In the Japanese
+      // locale everyone speaks Japanese; language_lookup.json maps it to "ja".
+      return "japanese";
+    }
     if (ethnicity.equals("hispanic")) {
       RandomCollection<String> hispanicLanguageUsage = new RandomCollection<>();
       // https://factfinder.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=ACS_17_5YR_B16006&prodType=table
@@ -269,7 +275,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return the income level
    */
-  public int pickIncome(RandomNumberGenerator random) {
+  public synchronized int pickIncome(RandomNumberGenerator random) {
     // lazy-load in case this randomcollection isn't necessary
     if (incomeDistribution == null) {
       Map<String, Double> tempIncome = new HashMap<>(income);
@@ -332,7 +338,7 @@ public class Demographics implements Comparable<Demographics>, Serializable {
    * @param random the random number generator to use
    * @return the randomly selected education level
    */
-  public String pickEducation(RandomNumberGenerator random) {
+  public synchronized String pickEducation(RandomNumberGenerator random) {
     // lazy-load in case this randomcollection isn't necessary
     if (educationDistribution == null) {
       educationDistribution = buildRandomCollectionFromMap(education);

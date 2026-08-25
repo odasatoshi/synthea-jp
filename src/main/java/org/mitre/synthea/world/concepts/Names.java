@@ -39,8 +39,11 @@ public class Names {
    */
   public static final String nameLocale = Config.get("generate.name_locale", "");
 
-  /** True when names are written family-name-first, e.g. 山田 太郎. */
-  public static final boolean familyNameFirst = "japanese".equals(nameLocale);
+  /**
+   * True when the conventions that go with the Japanese name list apply: family name
+   * first (山田 太郎), no honorific prefix or suffix, and Japanese-style addresses.
+   */
+  public static final boolean japaneseLocale = "japanese".equals(nameLocale);
 
   /** Separator between a name and its kana (phonetic) reading in names.yml. */
   public static final char KANA_SEPARATOR = '|';
@@ -84,7 +87,7 @@ public class Names {
    * @return full name
    */
   public static String fullName(String first, String last) {
-    return familyNameFirst ? last + " " + first : first + " " + last;
+    return japaneseLocale ? last + " " + first : first + " " + last;
   }
 
   /**
@@ -100,7 +103,7 @@ public class Names {
     if (middle == null || middle.isEmpty()) {
       return fullName(first, last);
     }
-    return familyNameFirst ? last + " " + first + " " + middle
+    return japaneseLocale ? last + " " + first + " " + middle
         : first + " " + middle + " " + last;
   }
 
@@ -182,6 +185,16 @@ public class Names {
    */
   @SuppressWarnings("unchecked")
   public static String fakeAddress(boolean includeLine2, Person person) {
+    if (japaneseLocale) {
+      // 日本の住所に街路名は無い。町名は demographics/zipcodes に持っていないので、
+      // 丁目・番・号にあたる数字だけを組む。
+      String banchi = (person.randInt(9) + 1) + "-" + (person.randInt(30) + 1)
+          + "-" + (person.randInt(20) + 1);
+      if (includeLine2) {
+        return banchi + " " + (person.randInt(9) + 1) + "0" + (person.randInt(9) + 1) + "号室";
+      }
+      return banchi;
+    }
     int number = person.randInt(1000) + 100;
     List<String> n = (List<String>)names.get("english.family");
     // for now just use family names as the street name.

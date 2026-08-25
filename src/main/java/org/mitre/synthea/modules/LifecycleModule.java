@@ -176,8 +176,16 @@ public final class LifecycleModule extends Module {
         attributes.put(Names.NAME_KANA, Names.fullName(first[1], last[1]));
       }
 
-      String phoneNumber = "555-" + ((person.randInt(999 - 100 + 1) + 100)) + "-"
-          + ((person.randInt(9999 - 1000 + 1) + 1000));
+      String phoneNumber;
+      if (Names.japaneseLocale) {
+        // 架空の番号。日本には 555 のような試験用番号帯が無いので、概ね未割当の
+        // 9999 局を使う。携帯 (090) と東京の固定電話 (03) を混ぜる。
+        phoneNumber = (person.rand() < 0.6 ? "090" : "03") + "-9999-"
+            + (person.randInt(9000) + 1000);
+      } else {
+        phoneNumber = "555-" + ((person.randInt(999 - 100 + 1) + 100)) + "-"
+            + ((person.randInt(9999 - 1000 + 1) + 1000));
+      }
       attributes.put(Person.TELECOM, phoneNumber);
 
       boolean hasStreetAddress2 = person.rand() < 0.5;
@@ -321,7 +329,7 @@ public final class LifecycleModule extends Module {
         break;
       case 18:
         // name prefix
-        if (person.attributes.get(Person.NAME_PREFIX) == null && !Names.familyNameFirst) {
+        if (person.attributes.get(Person.NAME_PREFIX) == null && !Names.japaneseLocale) {
           // Japanese records carry no name prefix
           String namePrefix;
           if ("M".equals(person.attributes.get(Person.GENDER))) {
@@ -360,7 +368,7 @@ public final class LifecycleModule extends Module {
           if (getsMarried) {
             person.attributes.put(Person.MARITAL_STATUS, "M");
             if ("F".equals(person.attributes.get(Person.GENDER))) {
-              if (!Names.familyNameFirst) {
+              if (!Names.japaneseLocale) {
                 person.attributes.put(Person.NAME_PREFIX, "Mrs.");
               }
               person.attributes.put(Person.MAIDEN_NAME, person.attributes.get(Person.LAST_NAME));
@@ -390,7 +398,7 @@ public final class LifecycleModule extends Module {
         break;
       case 30:
         // "overeducated" -> suffix
-        if ((person.attributes.get(Person.NAME_SUFFIX) == null) && !Names.familyNameFirst
+        if ((person.attributes.get(Person.NAME_SUFFIX) == null) && !Names.japaneseLocale
             && ((double) person.attributes.get(Person.EDUCATION_LEVEL) >= 0.95)) {
           List<String> suffixList = Arrays.asList("PhD", "JD", "MD");
           person.attributes.put(Person.NAME_SUFFIX,

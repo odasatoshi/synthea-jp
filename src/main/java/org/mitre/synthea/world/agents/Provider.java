@@ -721,8 +721,11 @@ public class Provider implements QuadTreeElement, Serializable {
       String lastName = Names.fakeLastName(language, doc);
       clinician.attributes.put(Clinician.FIRST_NAME, firstName);
       clinician.attributes.put(Clinician.LAST_NAME, lastName);
-      clinician.attributes.put(Clinician.NAME, firstName + " " + lastName);
-      clinician.attributes.put(Clinician.NAME_PREFIX, "Dr.");
+      clinician.attributes.put(Clinician.NAME, Names.fullName(firstName, lastName));
+      if (!Names.japaneseLocale) {
+        // Japanese records carry no honorific prefix
+        clinician.attributes.put(Clinician.NAME_PREFIX, "Dr.");
+      }
       // Degree's beyond a bachelors degree are not currently tracked.
       clinician.attributes.put(Clinician.EDUCATION, "bs_degree");
       String ssn = "999-" + ((doc.randInt(99 - 10 + 1) + 10)) + "-"
