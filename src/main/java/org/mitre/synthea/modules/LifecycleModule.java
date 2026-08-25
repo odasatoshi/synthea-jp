@@ -372,8 +372,10 @@ public final class LifecycleModule extends Module {
                 person.attributes.put(Person.NAME_PREFIX, "Mrs.");
               }
               person.attributes.put(Person.MAIDEN_NAME, person.attributes.get(Person.LAST_NAME));
-              person.attributes.put(Names.MAIDEN_NAME_KANA,
-                  person.attributes.get(Names.LAST_NAME_KANA));
+              Object lastNameKana = person.attributes.get(Names.LAST_NAME_KANA);
+              if (lastNameKana != null) {
+                person.attributes.put(Names.MAIDEN_NAME_KANA, lastNameKana);
+              }
               String firstName = ((String) person.attributes.get(Person.FIRST_NAME));
               String middleName = null;
               if (person.attributes.containsKey(Person.MIDDLE_NAME)) {
@@ -385,10 +387,11 @@ public final class LifecycleModule extends Module {
               person.attributes.put(Person.LAST_NAME, newLastName);
               person.attributes.put(Person.NAME,
                   Names.fullName(firstName, middleName, newLastName));
-              if (!newLast[1].isEmpty()) {
+              String firstNameKana = (String) person.attributes.get(Names.FIRST_NAME_KANA);
+              if (!newLast[1].isEmpty() && firstNameKana != null) {
                 person.attributes.put(Names.LAST_NAME_KANA, newLast[1]);
-                person.attributes.put(Names.NAME_KANA, Names.fullName(
-                    (String) person.attributes.get(Names.FIRST_NAME_KANA), newLast[1]));
+                person.attributes.put(Names.NAME_KANA,
+                    Names.fullName(firstNameKana, newLast[1]));
               }
             }
           } else {
