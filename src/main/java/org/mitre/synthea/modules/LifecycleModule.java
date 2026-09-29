@@ -220,7 +220,12 @@ public final class LifecycleModule extends Module {
       person.attributes.put(Person.ZIP, zipCode);
       person.attributes.put(Person.FIPS, Location.getFipsCodeByZipCode(zipCode));
       String[] birthPlace;
-      if ("english".equalsIgnoreCase((String) attributes.get(Person.FIRST_LANGUAGE))) {
+      if (Names.japaneseLocale) {
+        // Born in Japan, not abroad: foreign_birthplace.json only has four romanized
+        // Japanese cities. Written prefecture first, without separators: 東京都北区.
+        birthPlace = location.randomBirthPlace(person);
+        birthPlace[3] = birthPlace[1] + birthPlace[0];
+      } else if ("english".equalsIgnoreCase((String) attributes.get(Person.FIRST_LANGUAGE))) {
         birthPlace = location.randomBirthPlace(person);
       } else {
         birthPlace = location.randomBirthplaceByLanguage(
